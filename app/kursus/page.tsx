@@ -8,18 +8,27 @@ export default function KursusPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const userId = localStorage.getItem("user_id");
-    if (!userId) return;
+    // Pastikan hanya jalan di client
+    const employeeId =
+      typeof window !== "undefined" ? localStorage.getItem("employee_id") : null;
+
+    if (!employeeId) {
+      setLoading(false);
+      return;
+    }
 
     const fetchKursus = async () => {
       const { data, error } = await supabase
         .from("kursus")
         .select("*")
-        .eq("user_id", userId)
+        .eq("employee_id", employeeId)
         .order("tarikh_mula", { ascending: false });
 
-      if (error) console.error(error);
-      else setKursus(data || []);
+      if (error) {
+        console.error("Ralat fetch kursus:", error.message);
+      } else {
+        setKursus(data || []);
+      }
       setLoading(false);
     };
 
@@ -39,6 +48,7 @@ export default function KursusPage() {
           + Tambah Kursus
         </Link>
       </div>
+
       <table className="w-full border-collapse border">
         <thead className="bg-gray-100">
           <tr>
@@ -78,6 +88,7 @@ export default function KursusPage() {
           )}
         </tbody>
       </table>
+
       <div className="mt-4">
         <Link href="/dashboard" className="text-sm text-gray-600 hover:underline">
           ← Kembali ke Dashboard
