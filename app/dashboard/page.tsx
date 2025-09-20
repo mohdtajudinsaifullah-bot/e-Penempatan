@@ -7,7 +7,15 @@ export default function Dashboard() {
   const [employee, setEmployee] = useState<any>(null);
   const [pasangan, setPasangan] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const employeeId = localStorage.getItem("employee_id");
+  const [employeeId, setEmployeeId] = useState<string | null>(null);
+
+  // 🔹 Pastikan localStorage hanya dipanggil di client
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const id = localStorage.getItem("employee_id");
+      setEmployeeId(id);
+    }
+  }, []);
 
   useEffect(() => {
     async function fetchData() {
@@ -110,35 +118,35 @@ export default function Dashboard() {
               <div className="flex flex-col gap-2">
                 <Link
                   href="/sejarah/tambah"
-    className="px-4 py-2 bg-black text-white rounded"
-  >
-    Tambah Sejarah Perkhidmatan
-  </Link>
-  <Link
-    href="/kursus/tambah"
-    className="px-4 py-2 bg-black text-white rounded"
-  >
-    Tambah Kursus
-  </Link>
-  <Link
-    href="/kenaikan-pangkat"
-    className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
-  >
-    Sejarah Kenaikan Pangkat
-  </Link>
-  <Link
-    href="/sejarah"
-    className="px-4 py-2 bg-gray-200 text-black rounded"
-  >
-    Lihat Sejarah Perkhidmatan
-  </Link>
-  <Link
-    href="/kursus"
-    className="px-4 py-2 bg-gray-200 text-black rounded"
-  >
-    Lihat Kursus
-  </Link>
-</div>
+                  className="px-4 py-2 bg-black text-white rounded"
+                >
+                  Tambah Sejarah Perkhidmatan
+                </Link>
+                <Link
+                  href="/kursus/tambah"
+                  className="px-4 py-2 bg-black text-white rounded"
+                >
+                  Tambah Kursus
+                </Link>
+                <Link
+                  href="/kenaikan-pangkat"
+                  className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
+                >
+                  Sejarah Kenaikan Pangkat
+                </Link>
+                <Link
+                  href="/sejarah"
+                  className="px-4 py-2 bg-gray-200 text-black rounded"
+                >
+                  Lihat Sejarah Perkhidmatan
+                </Link>
+                <Link
+                  href="/kursus"
+                  className="px-4 py-2 bg-gray-200 text-black rounded"
+                >
+                  Lihat Kursus
+                </Link>
+              </div>
             </div>
           </div>
 

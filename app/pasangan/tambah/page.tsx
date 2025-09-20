@@ -1,11 +1,19 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 
 export default function TambahPasangan() {
   const router = useRouter();
-  const employeeId = localStorage.getItem("employee_id");
+  const [employeeId, setEmployeeId] = useState<string | null>(null);
+
+  // 🔹 Pastikan localStorage hanya dipanggil di client
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const id = localStorage.getItem("employee_id");
+      setEmployeeId(id);
+    }
+  }, []);
 
   const [formData, setFormData] = useState({
     nama_pasangan: "",
@@ -16,7 +24,9 @@ export default function TambahPasangan() {
 
   const [saving, setSaving] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 

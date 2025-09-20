@@ -7,9 +7,16 @@ export default function KemaskiniProfil() {
   const [employee, setEmployee] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [employeeId, setEmployeeId] = useState<string | null>(null);
   const router = useRouter();
 
-  const employeeId = localStorage.getItem("employee_id");
+  // 🔹 Pastikan localStorage hanya dipanggil di client
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const id = localStorage.getItem("employee_id");
+      setEmployeeId(id);
+    }
+  }, []);
 
   useEffect(() => {
     async function fetchEmployee() {
