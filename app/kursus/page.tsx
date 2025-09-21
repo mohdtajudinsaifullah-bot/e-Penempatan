@@ -6,18 +6,24 @@ import Link from "next/link";
 export default function KursusPage() {
   const [kursus, setKursus] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [employeeId, setEmployeeId] = useState<string | null>(null);
 
+  // Ambil employee_id dari localStorage bila client ready
   useEffect(() => {
-    // Pastikan hanya jalan di client
-    const employeeId =
-      typeof window !== "undefined" ? localStorage.getItem("employee_id") : null;
+    if (typeof window !== "undefined") {
+      const id = localStorage.getItem("employee_id");
+      setEmployeeId(id);
+    }
+  }, []);
 
+  // Fetch kursus bila employeeId dah dapat
+  useEffect(() => {
     if (!employeeId) {
       setLoading(false);
       return;
     }
 
-    const fetchKursus = async () => {
+    async function fetchKursus() {
       const { data, error } = await supabase
         .from("kursus")
         .select("*")
@@ -30,10 +36,10 @@ export default function KursusPage() {
         setKursus(data || []);
       }
       setLoading(false);
-    };
+    }
 
     fetchKursus();
-  }, []);
+  }, [employeeId]);
 
   if (loading) return <p className="p-6">Memuatkan...</p>;
 
