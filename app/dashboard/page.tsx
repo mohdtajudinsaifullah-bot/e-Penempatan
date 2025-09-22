@@ -1,199 +1,239 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
-import Link from "next/link";
+
+type Employee = {
+  id: string;
+  nama: string | null;
+  no_ic: string | null;
+  email: string | null;
+  tarikh_lantikan: string | null;
+  jawatan_sem: string | null;
+  jabatan_sem: string | null;
+  jabatan: string | null;
+  alamat_semasa: string | null;
+  lokasi?: string | null;
+};
+
+type Pasangan = {
+  id: string;
+  nama: string | null;
+  no_ic: string | null;
+  pekerjaan: string | null;
+  jabatan: string | null;
+  lokasi: string | null;
+};
 
 export default function Dashboard() {
-  const [employee, setEmployee] = useState<any>(null);
-  const [pasangan, setPasangan] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [userId, setUserId] = useState<string | null>(null);
+  const router = useRouter();
+  const [emp, setEmp] = useState<Employee | null>(null);
+  const [pasangan, setPasangan] = useState<Pasangan[]>([]);
+  const [error, setError] = useState<string>("");
 
-  // Pastikan localStorage dipanggil hanya di client
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const id = localStorage.getItem("user_id"); // ✅ guna user_id
-      setUserId(id);
-    }
+    (async () => {
+      setError("");
+      try {
+        const userId = localStorage.getItem("user_id") || "";
+
+        if (!userId) {
+          setError("Sesi pengguna tidak sah. Sila log masuk semula.");
+          return;
+        }
+
+        // 1) Dapatkan employee ikut user_id
+        const employeeRes = await supabase
+          .from("employees")
+          .select(
+            'id,nama,no_ic,email,tarikh_lantikan,jawatan_sem,jabatan_sem,jabatan,alamat_semasa,"lokasi"'
+          )
+          .eq("user_id", userId)
+          .maybeSingle();
+
+        if (employeeRes.error) throw employeeRes.error;
+        if (!employeeRes.data) {
+          setError("Maklumat pengguna tidak ditemui.");
+          return;
+        }
+
+        setEmp(employeeRes.data);
+
+        // Simpan id untuk kegunaan lain (fallback sahaja)
+        localStorage.setItem("employee_id", employeeRes.data.id);
+
+        // 2) Dapatkan senarai pasangan ikut user_id
+        const pasanganRes = await supabase
+          .from("pasangan")
+          .select("id,nama,no_ic,pekerjaan,jabatan,lokasi")
+          .eq("user_id", userId) // ✅ sudah selaras
+          .order("created_at", { ascending: true });
+
+        if (!pasanganRes.error && pasanganRes.data) {
+          setPasangan(pasanganRes.data);
+        }
+      } catch (e: any) {
+        setError(e?.message || "Ralat memuatkan data.");
+      }
+    })();
   }, []);
 
-  useEffect(() => {
-    async function fetchData() {
-      if (!userId) {
-        setLoading(false);
-        return;
-      }
-
-      // Data Employee
-      const { data: empData, error: empError } = await supabase
-        .from("employees")
-        .select("*")
-        .eq("user_id", userId) // ✅ selaraskan ke user_id
-        .single();
-
-      if (empError) console.error("Ralat employee:", empError.message);
-      else setEmployee(empData);
-
-      // Data Pasangan
-      const { data: pasanganData, error: pasanganError } = await supabase
-        .from("pasangan")
-        .select(
-          "id, nama_pasangan, pekerjaan_pasangan, jabatan_pasangan, lokasi_pasangan"
-        )
-        .eq("user_id", userId); // ✅ selaraskan ke user_id
-
-      if (pasanganError) console.error("Ralat pasangan:", pasanganError.message);
-      else setPasangan(pasanganData || []);
-
-      setLoading(false);
-    }
-    fetchData();
-  }, [userId]);
+  const field = (label: string, value?: string | null) => (
+    <div className="flex flex-col gap-1">
+      <div className="text-xs uppercase tracking-wide text-gray-500">
+        {label}
+      </div>
+      <div className="text-[15px] font-medium text-gray-900">
+        {value && value.trim() !== "" ? value : "—"}
+      </div>
+    </div>
+  );
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      {/* 🔹 Header Dashboard */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">e-PS • Dashboard</h1>
-
-        <button
-          onClick={async () => {
-            await supabase.auth.signOut();
-            localStorage.clear();
-            window.location.href = "/login";
-          }}
-          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-        >
-          Log Keluar
-        </button>
+    <div className="mx-auto max-w-6xl px-4 py-8">
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-3xl font-bold">e-PS • Dashboard</h1>
+        <div className="flex gap-2">
+          <button
+            onClick={() => router.push("/sejarah")}
+            className="rounded bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700"
+          >
+            Sejarah Perkhidmatan
+          </button>
+          <button
+            onClick={() => router.push("/kursus")}
+            className="rounded bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-700"
+          >
+            Kursus
+          </button>
+          <button
+            onClick={() => {
+              localStorage.clear();
+              router.push("/login");
+            }}
+            className="rounded bg-gray-800 px-4 py-2 text-white hover:bg-gray-900"
+          >
+            Log Keluar
+          </button>
+        </div>
       </div>
 
-      {loading ? (
-        <p>Sedang memuat...</p>
-      ) : (
-        <>
-          {/* Profil Pegawai */}
-          <div className="grid grid-cols-2 gap-6 mb-8">
-            <div className="bg-white shadow p-4 rounded">
-              <h2 className="text-lg font-semibold mb-3">
-                {employee?.nama || "Tiada Nama"}
-              </h2>
-              <p className="text-sm text-gray-600">
-                No. IC: {employee?.no_ic || "-"}
-              </p>
-
-              <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
-                <div>
-                  <strong>E-mel:</strong> {employee?.email || "-"}
-                </div>
-                <div>
-                  <strong>Tarikh Lantikan:</strong>{" "}
-                  {employee?.tarikh_lantikan || "-"}
-                </div>
-                <div>
-                  <strong>Jabatan Semasa:</strong>{" "}
-                  {employee?.jabatan_sem || "-"}
-                </div>
-                <div>
-                  <strong>Jawatan Semasa:</strong>{" "}
-                  {employee?.jawatan_sem || "-"}
-                </div>
-                <div>
-                  <strong>Lokasi:</strong> {employee?.lokasi || "-"}
-                </div>
-                <div>
-                  <strong>Alamat:</strong> {employee?.alamat_semasa || "-"}
-                </div>
-              </div>
-
-              {/* 🔗 Butang Kemaskini Profil */}
-              <Link
-                href="/kemaskini"
-                className="mt-4 inline-block px-4 py-2 bg-black text-white rounded hover:bg-gray-800"
-              >
-                Kemaskini Profil
-              </Link>
-            </div>
-
-            {/* Tindakan Pantas */}
-            <div className="bg-white shadow p-4 rounded">
-              <h3 className="text-md font-semibold mb-4">Tindakan Pantas</h3>
-              <div className="flex flex-col gap-2">
-                <Link
-                  href="/sejarah/tambah"
-                  className="px-4 py-2 bg-black text-white rounded"
-                >
-                  Tambah Sejarah Perkhidmatan
-                </Link>
-                <Link
-                  href="/kursus/tambah"
-                  className="px-4 py-2 bg-black text-white rounded"
-                >
-                  Tambah Kursus
-                </Link>
-                <Link
-                  href="/kenaikan-pangkat"
-                  className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
-                >
-                  Sejarah Kenaikan Pangkat
-                </Link>
-                <Link
-                  href="/sejarah"
-                  className="px-4 py-2 bg-gray-200 text-black rounded"
-                >
-                  Lihat Sejarah Perkhidmatan
-                </Link>
-                <Link
-                  href="/kursus"
-                  className="px-4 py-2 bg-gray-200 text-black rounded"
-                >
-                  Lihat Kursus
-                </Link>
-              </div>
-            </div>
-          </div>
-
-          {/* Maklumat Pasangan */}
-          <div className="bg-white shadow p-4 rounded">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold">Maklumat Pasangan</h2>
-              <Link
-                href="/pasangan"
-                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-              >
-                Kemaskini
-              </Link>
-            </div>
-
-            {pasangan.length === 0 ? (
-              <p className="text-gray-500">Tiada maklumat pasangan.</p>
-            ) : (
-              <table className="w-full border-collapse bg-white shadow rounded">
-                <thead className="bg-gray-100">
-                  <tr>
-                    <th className="border px-4 py-2 text-left">Nama</th>
-                    <th className="border px-4 py-2 text-left">Pekerjaan</th>
-                    <th className="border px-4 py-2 text-left">Jabatan</th>
-                    <th className="border px-4 py-2 text-left">Lokasi</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pasangan.map((p) => (
-                    <tr key={p.id} className="hover:bg-gray-50">
-                      <td className="border px-4 py-2">{p.nama_pasangan}</td>
-                      <td className="border px-4 py-2">
-                        {p.pekerjaan_pasangan}
-                      </td>
-                      <td className="border px-4 py-2">{p.jabatan_pasangan}</td>
-                      <td className="border px-4 py-2">{p.lokasi_pasangan}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-        </>
+      {error && (
+        <div className="mb-4 rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
       )}
+
+      {/* Kad Maklumat Peribadi */}
+      <div className="grid gap-6 md:grid-cols-3">
+        <div className="rounded-xl border bg-white/70 p-5 backdrop-blur md:col-span-2">
+          <div className="mb-6 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-200 text-slate-700">
+                {emp?.nama?.slice(0, 2).toUpperCase() || "MT"}
+              </div>
+              <div>
+                <div className="text-lg font-semibold">
+                  {emp?.nama || "—"}
+                </div>
+                <div className="text-sm text-gray-600">
+                  No. IC: {emp?.no_ic || "—"}
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={() => router.push("/employee/edit")}
+              className="rounded bg-slate-900 px-4 py-2 text-white hover:bg-black"
+            >
+              Kemaskini Profil
+            </button>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            {field("E-mel", emp?.email)}
+            {field("Tarikh Lantikan", emp?.tarikh_lantikan)}
+            {field("Jabatan Semasa", emp?.jabatan_sem || emp?.jabatan)}
+            {field("Jawatan Semasa", emp?.jawatan_sem)}
+            {field("Lokasi", emp?.lokasi ?? null)}
+            {field("Alamat Semasa", emp?.alamat_semasa)}
+          </div>
+        </div>
+
+        {/* Tindakan Pantas */}
+        <div className="rounded-xl border bg-white/70 p-5 backdrop-blur">
+          <div className="mb-4 text-base font-semibold">Tindakan Pantas</div>
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={() => router.push("/sejarah/tambah")}
+              className="rounded bg-slate-900 px-4 py-2 text-white hover:bg-black"
+            >
+              Tambah Sejarah Perkhidmatan
+            </button>
+            <button
+              onClick={() => router.push("/kursus/tambah")}
+              className="rounded bg-slate-900 px-4 py-2 text-white hover:bg-black"
+            >
+              Tambah Kursus
+            </button>
+            <button
+              onClick={() => router.push("/sejarah")}
+              className="rounded bg-slate-100 px-4 py-2 text-slate-800 hover:bg-slate-200"
+            >
+              Lihat Sejarah Perkhidmatan
+            </button>
+            <button
+              onClick={() => router.push("/kursus")}
+              className="rounded bg-slate-100 px-4 py-2 text-slate-800 hover:bg-slate-200"
+            >
+              Lihat Kursus
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Seksyen Pasangan */}
+      <div className="mt-6 rounded-xl border bg-white/70 p-5 backdrop-blur">
+        <div className="mb-3 flex items-center justify-between">
+          <div className="text-base font-semibold">Maklumat Pasangan</div>
+          <button
+            onClick={() => router.push("/pasangan")}
+            className="rounded bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-700"
+          >
+            Kemaskini
+          </button>
+        </div>
+
+        {pasangan.length === 0 ? (
+          <div className="py-3 text-sm text-gray-600">
+            Tiada maklumat pasangan.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="border-b bg-slate-50 text-left">
+                  <th className="px-3 py-2">Nama</th>
+                  <th className="px-3 py-2">No. IC</th>
+                  <th className="px-3 py-2">Pekerjaan</th>
+                  <th className="px-3 py-2">Jabatan</th>
+                  <th className="px-3 py-2">Lokasi</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pasangan.map((p) => (
+                  <tr key={p.id} className="border-b">
+                    <td className="px-3 py-2">{p.nama || "—"}</td>
+                    <td className="px-3 py-2">{p.no_ic || "—"}</td>
+                    <td className="px-3 py-2">{p.pekerjaan || "—"}</td>
+                    <td className="px-3 py-2">{p.jabatan || "—"}</td>
+                    <td className="px-3 py-2">{p.lokasi || "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
