@@ -5,13 +5,13 @@ import { useRouter } from "next/navigation";
 
 export default function TambahPasangan() {
   const router = useRouter();
-  const [employeeId, setEmployeeId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
   // 🔹 Pastikan localStorage hanya dipanggil di client
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const id = localStorage.getItem("employee_id");
-      setEmployeeId(id);
+      const id = localStorage.getItem("user_id");
+      setUserId(id);
     }
   }, []);
 
@@ -32,7 +32,7 @@ export default function TambahPasangan() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!employeeId) {
+    if (!userId) {
       alert("Sesi pengguna tidak sah. Sila log masuk semula.");
       return;
     }
@@ -41,7 +41,7 @@ export default function TambahPasangan() {
 
     const { error } = await supabase.from("pasangan").insert([
       {
-        employee_id: employeeId,
+        user_id: userId,
         nama_pasangan: formData.nama_pasangan,
         pekerjaan_pasangan: formData.pekerjaan_pasangan,
         jabatan_pasangan: formData.jabatan_pasangan,

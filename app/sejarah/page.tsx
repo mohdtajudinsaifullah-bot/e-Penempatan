@@ -10,8 +10,10 @@ export default function SenaraiSejarahPage() {
 
   useEffect(() => {
     const fetchSejarah = async () => {
-      const employee_id = localStorage.getItem("employee_id");
-      if (!employee_id) {
+      const userId =
+        typeof window !== "undefined" ? localStorage.getItem("user_id") : null;
+
+      if (!userId) {
         setLoading(false);
         return;
       }
@@ -19,11 +21,11 @@ export default function SenaraiSejarahPage() {
       const { data, error } = await supabase
         .from("sejarah_perkhidmatan")
         .select("*")
-        .eq("employee_id", employee_id)
+        .eq("user_id", userId) // 🔹 guna user_id konsisten
         .order("tarikh_lapor_diri", { ascending: false });
 
       if (error) {
-        console.error("Error fetch sejarah:", error);
+        console.error("Error fetch sejarah:", error.message);
       } else {
         setSejarah(data || []);
       }
@@ -70,8 +72,7 @@ export default function SenaraiSejarahPage() {
                   ? new Date(item.tarikh_berpindah)
                   : new Date();
                 const years = tamat.getFullYear() - mula.getFullYear();
-                const months =
-                  tamat.getMonth() - mula.getMonth() + (years * 12);
+                const months = tamat.getMonth() - mula.getMonth() + years * 12;
                 const tempoh = `${Math.floor(months / 12)} thn ${months % 12} bln`;
 
                 return (

@@ -9,6 +9,14 @@ export default function KemaskiniPasangan() {
   const params = useParams();
   const id = params?.id as string;
 
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setUserId(localStorage.getItem("user_id"));
+    }
+  }, []);
+
   const [formData, setFormData] = useState({
     nama_pasangan: "",
     pekerjaan_pasangan: "",
@@ -40,7 +48,9 @@ export default function KemaskiniPasangan() {
     if (id) fetchData();
   }, [id]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -51,6 +61,7 @@ export default function KemaskiniPasangan() {
     const { error } = await supabase
       .from("pasangan")
       .update({
+        user_id: userId, // 🔹 Pastikan konsisten guna user_id
         nama_pasangan: formData.nama_pasangan,
         pekerjaan_pasangan: formData.pekerjaan_pasangan,
         jabatan_pasangan: formData.jabatan_pasangan,

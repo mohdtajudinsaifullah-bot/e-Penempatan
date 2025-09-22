@@ -68,14 +68,15 @@ export default function SejarahForm() {
     e.preventDefault();
     setLoading(true);
 
-    const employee_id = localStorage.getItem("employee_id");
-    if (!employee_id) {
+    const userId =
+      typeof window !== "undefined" ? localStorage.getItem("user_id") : null;
+    if (!userId) {
       alert("Sesi pengguna tidak sah. Sila log masuk semula.");
       setLoading(false);
       return;
     }
 
-    const payload = { ...form, employee_id };
+    const payload = { ...form, user_id: userId }; // 🔹 guna user_id
 
     let res;
     if (id) {

@@ -1,4 +1,4 @@
-"use client";
+"use client"; 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
@@ -6,18 +6,18 @@ import Link from "next/link";
 export default function SenaraiPasangan() {
   const [pasangan, setPasangan] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const employeeId =
-    typeof window !== "undefined" ? localStorage.getItem("employee_id") : null;
+  const userId =
+    typeof window !== "undefined" ? localStorage.getItem("user_id") : null;
 
   useEffect(() => {
     async function fetchPasangan() {
-      if (!employeeId) return;
+      if (!userId) return;
       const { data, error } = await supabase
         .from("pasangan")
         .select(
           "id, nama_pasangan, pekerjaan_pasangan, jabatan_pasangan, lokasi_pasangan"
         )
-        .eq("employee_id", employeeId);
+        .eq("user_id", userId);
 
       if (error) {
         console.error("Ralat fetch pasangan:", error.message);
@@ -27,7 +27,7 @@ export default function SenaraiPasangan() {
       setLoading(false);
     }
     fetchPasangan();
-  }, [employeeId]);
+  }, [userId]);
 
   return (
     <div className="max-w-5xl mx-auto p-6">

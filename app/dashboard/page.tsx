@@ -7,52 +7,36 @@ export default function Dashboard() {
   const [employee, setEmployee] = useState<any>(null);
   const [pasangan, setPasangan] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [employeeId, setEmployeeId] = useState<string | null>(null);
-
-  // 🔹 Pastikan localStorage hanya dipanggil di client
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const id = localStorage.getItem("employee_id");
-      setEmployeeId(id);
-    }
-  }, []);
+  const userId = typeof window !== "undefined" ? localStorage.getItem("user_id") : null;
 
   useEffect(() => {
     async function fetchData() {
-      if (!employeeId) return;
+      if (!userId) return;
 
-      // Data Employee
       const { data: empData, error: empError } = await supabase
         .from("employees")
         .select("*")
-        .eq("id", employeeId)
+        .eq("user_id", userId)
         .single();
-
       if (empError) console.error("Ralat employee:", empError.message);
       else setEmployee(empData);
 
-      // Data Pasangan
       const { data: pasanganData, error: pasanganError } = await supabase
         .from("pasangan")
-        .select(
-          "id, nama_pasangan, pekerjaan_pasangan, jabatan_pasangan, lokasi_pasangan"
-        )
-        .eq("employee_id", employeeId);
-
+        .select("id, nama_pasangan, pekerjaan_pasangan, jabatan_pasangan, lokasi_pasangan")
+        .eq("user_id", userId);
       if (pasanganError) console.error("Ralat pasangan:", pasanganError.message);
       else setPasangan(pasanganData || []);
 
       setLoading(false);
     }
     fetchData();
-  }, [employeeId]);
+  }, [userId]);
 
   return (
     <div className="max-w-6xl mx-auto p-6">
-      {/* 🔹 Header Dashboard */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">e-PS • Dashboard</h1>
-
         <button
           onClick={async () => {
             await supabase.auth.signOut();
@@ -72,42 +56,17 @@ export default function Dashboard() {
           {/* Profil Pegawai */}
           <div className="grid grid-cols-2 gap-6 mb-8">
             <div className="bg-white shadow p-4 rounded">
-              <h2 className="text-lg font-semibold mb-3">
-                {employee?.nama || "Tiada Nama"}
-              </h2>
-              <p className="text-sm text-gray-600">
-                No. IC: {employee?.no_ic || "-"}
-              </p>
-
+              <h2 className="text-lg font-semibold mb-3">{employee?.nama || "Tiada Nama"}</h2>
+              <p className="text-sm text-gray-600">No. IC: {employee?.no_ic || "-"}</p>
               <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
-                <div>
-                  <strong>E-mel:</strong> {employee?.email || "-"}
-                </div>
-                <div>
-                  <strong>Tarikh Lantikan:</strong>{" "}
-                  {employee?.tarikh_lantikan || "-"}
-                </div>
-                <div>
-                  <strong>Jabatan Semasa:</strong>{" "}
-                  {employee?.jabatan_sem || "-"}
-                </div>
-                <div>
-                  <strong>Jawatan Semasa:</strong>{" "}
-                  {employee?.jawatan_sem || "-"}
-                </div>
-                <div>
-                  <strong>Lokasi:</strong> {employee?.lokasi || "-"}
-                </div>
-                <div>
-                  <strong>Alamat:</strong> {employee?.alamat_semasa || "-"}
-                </div>
+                <div><strong>E-mel:</strong> {employee?.email || "-"}</div>
+                <div><strong>Tarikh Lantikan:</strong> {employee?.tarikh_lantikan || "-"}</div>
+                <div><strong>Jabatan Semasa:</strong> {employee?.jabatan_sem || "-"}</div>
+                <div><strong>Jawatan Semasa:</strong> {employee?.jawatan_sem || "-"}</div>
+                <div><strong>Lokasi:</strong> {employee?.lokasi || "-"}</div>
+                <div><strong>Alamat:</strong> {employee?.alamat_semasa || "-"}</div>
               </div>
-
-              {/* 🔗 Butang Kemaskini Profil */}
-              <Link
-                href="/kemaskini"
-                className="mt-4 inline-block px-4 py-2 bg-black text-white rounded hover:bg-gray-800"
-              >
+              <Link href="/kemaskini" className="mt-4 inline-block px-4 py-2 bg-black text-white rounded hover:bg-gray-800">
                 Kemaskini Profil
               </Link>
             </div>
@@ -116,36 +75,11 @@ export default function Dashboard() {
             <div className="bg-white shadow p-4 rounded">
               <h3 className="text-md font-semibold mb-4">Tindakan Pantas</h3>
               <div className="flex flex-col gap-2">
-                <Link
-                  href="/sejarah/tambah"
-                  className="px-4 py-2 bg-black text-white rounded"
-                >
-                  Tambah Sejarah Perkhidmatan
-                </Link>
-                <Link
-                  href="/kursus/tambah"
-                  className="px-4 py-2 bg-black text-white rounded"
-                >
-                  Tambah Kursus
-                </Link>
-                <Link
-                  href="/kenaikan-pangkat"
-                  className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
-                >
-                  Sejarah Kenaikan Pangkat
-                </Link>
-                <Link
-                  href="/sejarah"
-                  className="px-4 py-2 bg-gray-200 text-black rounded"
-                >
-                  Lihat Sejarah Perkhidmatan
-                </Link>
-                <Link
-                  href="/kursus"
-                  className="px-4 py-2 bg-gray-200 text-black rounded"
-                >
-                  Lihat Kursus
-                </Link>
+                <Link href="/sejarah/form" className="px-4 py-2 bg-black text-white rounded">Tambah Sejarah Perkhidmatan</Link>
+                <Link href="/kursus/tambah" className="px-4 py-2 bg-black text-white rounded">Tambah Kursus</Link>
+                <Link href="/kenaikan-pangkat" className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">Sejarah Kenaikan Pangkat</Link>
+                <Link href="/sejarah" className="px-4 py-2 bg-gray-200 text-black rounded">Lihat Sejarah Perkhidmatan</Link>
+                <Link href="/kursus" className="px-4 py-2 bg-gray-200 text-black rounded">Lihat Kursus</Link>
               </div>
             </div>
           </div>
@@ -154,14 +88,10 @@ export default function Dashboard() {
           <div className="bg-white shadow p-4 rounded">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-semibold">Maklumat Pasangan</h2>
-              <Link
-                href="/pasangan"
-                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-              >
+              <Link href="/pasangan" className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
                 Kemaskini
               </Link>
             </div>
-
             {pasangan.length === 0 ? (
               <p className="text-gray-500">Tiada maklumat pasangan.</p>
             ) : (
@@ -178,9 +108,7 @@ export default function Dashboard() {
                   {pasangan.map((p) => (
                     <tr key={p.id} className="hover:bg-gray-50">
                       <td className="border px-4 py-2">{p.nama_pasangan}</td>
-                      <td className="border px-4 py-2">
-                        {p.pekerjaan_pasangan}
-                      </td>
+                      <td className="border px-4 py-2">{p.pekerjaan_pasangan}</td>
                       <td className="border px-4 py-2">{p.jabatan_pasangan}</td>
                       <td className="border px-4 py-2">{p.lokasi_pasangan}</td>
                     </tr>
