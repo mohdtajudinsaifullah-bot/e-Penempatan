@@ -14,7 +14,7 @@ export default function LoginPage() {
     setError("");
 
     try {
-      // ✅ Semak user berdasarkan No IC & Password
+      // ✅ Cari user ikut No IC & Password
       const { data: user, error: userError } = await supabase
         .from("users")
         .select("id, no_ic, password_hash")
@@ -27,6 +27,9 @@ export default function LoginPage() {
         return;
       }
 
+      // ✅ Simpan user_id ke localStorage
+      localStorage.setItem("user_id", user.id);
+
       // ✅ Dapatkan employee_id berdasarkan user.id
       const { data: employee, error: empError } = await supabase
         .from("employees")
@@ -35,12 +38,10 @@ export default function LoginPage() {
         .maybeSingle();
 
       if (empError) {
-        setError("Ralat mendapatkan maklumat pekerja.");
-        return;
+        console.error("Ralat employee:", empError.message);
       }
 
       if (employee) {
-        // ✅ Simpan employee_id ke localStorage (boleh dipakai semua page)
         localStorage.setItem("employee_id", employee.id);
       }
 
