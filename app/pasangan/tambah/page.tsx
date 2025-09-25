@@ -7,7 +7,7 @@ export default function TambahPasangan() {
   const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
 
-  // 🔹 Pastikan localStorage hanya dipanggil di client
+  // 🔹 Ambil user_id dari localStorage (hanya bila di client)
   useEffect(() => {
     if (typeof window !== "undefined") {
       const id = localStorage.getItem("user_id");
@@ -41,7 +41,7 @@ export default function TambahPasangan() {
 
     const { error } = await supabase.from("pasangan").insert([
       {
-        user_id: userId,
+        user_id: userId, // ✅ guna user_id
         nama_pasangan: formData.nama_pasangan,
         pekerjaan_pasangan: formData.pekerjaan_pasangan,
         jabatan_pasangan: formData.jabatan_pasangan,
@@ -52,6 +52,7 @@ export default function TambahPasangan() {
     setSaving(false);
 
     if (error) {
+      console.error("❌ Ralat insert pasangan:", error.message);
       alert("Gagal simpan pasangan: " + error.message);
     } else {
       alert("Maklumat pasangan berjaya disimpan!");
@@ -124,8 +125,12 @@ export default function TambahPasangan() {
             <option value="Sarawak">Sarawak</option>
             <option value="Selangor">Selangor</option>
             <option value="Terengganu">Terengganu</option>
-            <option value="Wilayah Persekutuan Kuala Lumpur">Wilayah Persekutuan Kuala Lumpur</option>
-            <option value="Wilayah Persekutuan Putrajaya">Wilayah Persekutuan Putrajaya</option>
+            <option value="Wilayah Persekutuan Kuala Lumpur">
+              Wilayah Persekutuan Kuala Lumpur
+            </option>
+            <option value="Wilayah Persekutuan Putrajaya">
+              Wilayah Persekutuan Putrajaya
+            </option>
             <option value="Wilayah Persekutuan Labuan">Wilayah Persekutuan Labuan</option>
           </select>
         </div>
